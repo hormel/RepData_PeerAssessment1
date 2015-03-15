@@ -1,9 +1,4 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
----
+# Reproducible Research: Peer Assessment 1
 
 ### Johns Hopkins University / Coursera
 ### March 2015
@@ -27,12 +22,11 @@ We first read in the data and then add columns to convert the interval data to a
 scales linearly with the time.  The interval logged in the file represents time as hhmm, which
 introduces gaps between 60-99 if interpreted as a number.
   
-```{r ReadData, echo = TRUE, output = "show"}
 
+```r
 tRawData <- read.csv ("activity.csv")
 aIntervalAsNumber <- sapply (tRawData$interval, function (x) { x %/% 100 + (x %% 100)/60 } )
 tData <- cbind (tRawData, aIntervalAsNumber)
-
 ```
   
   
@@ -40,8 +34,8 @@ tData <- cbind (tRawData, aIntervalAsNumber)
   
 We sum up the total steps taken each day and calculate the mean and median.  A histogram is provided to show the level of dispersion.
   
-```{r DailyStatistics, echo = TRUE, output = "show"}
 
+```r
 tStepsPerDay <- aggregate (tData$steps, by = list(tData$date), FUN=sum)
 names(tStepsPerDay) <- c("Date", "Steps")
 
@@ -51,17 +45,18 @@ cDailyStepsMin <- min (tStepsPerDay$Steps, na.rm = TRUE)
 cDailyStepsMax <- max (tStepsPerDay$Steps, na.rm = TRUE)
   
 hist(tStepsPerDay$Steps, col = "red", main = "Histogram of Daily Steps Taken", xlab = "Steps Per Day")
-
 ```
+
+![](PA1_template_files/figure-html/DailyStatistics-1.png) 
   
-In our dataset, between `r cDailyStepsMin` and `r cDailyStepsMax` steps were taken daily, with a **mean of `r as.integer (round (cDailyStepsMean))` steps** and **median of `r cDailyStepsMedian` steps**.
+In our dataset, between 41 and 21194 steps were taken daily, with a **mean of 10766 steps** and **median of 10765 steps**.
   
   
 ## What is the average daily activity pattern?
   
   
-```{r HourlyPattern, echo = TRUE, output = "show"}
 
+```r
 tDailyPattern <- aggregate (tData$steps, by = list (tData$aIntervalAsNumber), FUN=mean, na.rm = TRUE)
 names(tDailyPattern) = c("Interval", "Steps")
 cIntervalStepsMax <- max (tDailyPattern$Steps)
@@ -69,27 +64,27 @@ cIntervalMax <- tDailyPattern$Interval [tDailyPattern$Steps == cIntervalStepsMax
 
 plot (tDailyPattern, type = "l", col = "red", main = "Mean steps per hour", xlab = "Time of day (hour)", xaxt = 'n')
 axis (1, at = seq(from = 0, to = 24, by = 2))
-
 ```
+
+![](PA1_template_files/figure-html/HourlyPattern-1.png) 
   
-As might be expected, the step activity is concentrated during normal waking hours.  This individual appears to do most walking in the morning, with the **peak of `r as.integer (cIntervalStepsMax)` mean steps taken at `r as.integer (floor (cIntervalMax))`:`r as.integer (60 * cIntervalMax %% 1)`**.
+As might be expected, the step activity is concentrated during normal waking hours.  This individual appears to do most walking in the morning, with the **peak of 206 mean steps taken at 8:35**.
   
   
 ## Imputing missing values
   
-```{r MissingValues, echo = TRUE, output = "show"}
 
+```r
 cMissingData <- nrow (tData[is.na (tData$steps), ])
 cMissingDataRatio <- cMissingData / nrow (tData)
-
 ```
   
   
-The above statistics have been presented without any treatment for missing values.  We found there are **`r cMissingData` intervals total with missing data**, or `r round (100*cMissingDataRatio, digits = 2)`% of the dataset.  Here **we fill in missing values with the median (across all days with data) for the time of day**.
+The above statistics have been presented without any treatment for missing values.  We found there are **2304 intervals total with missing data**, or 13.11% of the dataset.  Here **we fill in missing values with the median (across all days with data) for the time of day**.
   
   
-```{r ImputingMissingValues, echo = TRUE, output = "show"}
 
+```r
 tIntervalMedian <- aggregate (tData$steps, by = list (tData$interval), FUN = median, na.rm = TRUE)
 names(tIntervalMedian) = c("Interval", "Steps")
 tImputedData <- tData
@@ -108,10 +103,11 @@ cImputedDailyStepsMin <- min (tImputedStepsPerDay$Steps, na.rm = TRUE)
 cImputedDailyStepsMax <- max (tImputedStepsPerDay$Steps, na.rm = TRUE)
   
 hist(tImputedStepsPerDay$Steps, col = "red", main = "Histogram of Daily Steps Taken (missing data imputed)", xlab = "Steps Per Day")
-
 ```
 
-Comparing the above histogram with the original, we see that a number of lower activity days (under 500 steps) have been added.  This suggests that when data was missing, it was for an entire day, not just a few intervals within a day.  With the imputed data, the **mean daily steps taken has dropped to `r as.integer (round (cImputedDailyStepsMean))` (from `r as.integer (round (cDailyStepsMean))`), and median has dropped to `r cImputedDailyStepsMedian` (from `r cDailyStepsMedian`).**  This suggests he median for any interval is typically below the mean, suggesting a pattern of some high activity days sprinkled amidst typical lower activity days.
+![](PA1_template_files/figure-html/ImputingMissingValues-1.png) 
+
+Comparing the above histogram with the original, we see that a number of lower activity days (under 500 steps) have been added.  This suggests that when data was missing, it was for an entire day, not just a few intervals within a day.  With the imputed data, the **mean daily steps taken has dropped to 9504 (from 10766), and median has dropped to 10395 (from 10765).**  This suggests he median for any interval is typically below the mean, suggesting a pattern of some high activity days sprinkled amidst typical lower activity days.
 
 (a quick scan of the dataset seems to confirm this)
   
@@ -120,8 +116,8 @@ Comparing the above histogram with the original, we see that a number of lower a
 
 A comparison of weekday and weekend activity is presented below:
 
-```{r WeekdayPatterns, echo = TRUE, output = "show"}
 
+```r
 tImputedData <- cbind (tImputedData, weekday = weekdays(as.Date(tImputedData$date)), stringsAsFactors = FALSE)
 for (i in 1:nrow (tImputedData)) {
   if (tImputedData$weekday[i] %in% c("Saturday", "Sunday")) {
@@ -138,7 +134,8 @@ par (mfrow = c(2, 1), mar = c(4, 4, 2, 1))
 plot (tWeekdayPattern[tWeekdayPattern$Weekday == "Weekday", 2:3], type = "l", col = "red", main = "Weekday", ylab = "Steps per Interval", xaxt = 'n', xlab = "", ylim = c (0, max (tWeekdayPattern$Steps)))
 plot (tWeekdayPattern[tWeekdayPattern$Weekday == "Weekend", 2:3], type = "l", col = "red", main = "Weekend", ylab = "Steps per Interval", xlab = "Time of day (hour)", xaxt = 'n', ylim = c (0, max (tWeekdayPattern$Steps)))
 axis (1, at = seq(from = 0, to = 24, by = 2))
-
 ```
+
+![](PA1_template_files/figure-html/WeekdayPatterns-1.png) 
 
 We see that **this individual appears to rise a little bit later on the weekend, but is more active throughout the day**.
